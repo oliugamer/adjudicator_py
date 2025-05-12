@@ -1,4 +1,5 @@
-from orders import *
+from orders import Order, Move, Hold, Support, Convoy
+from graph import Node
 
 class Board:
     node_id = {}
@@ -44,13 +45,13 @@ class Board:
                 print("Parsing Error")
         
     def addOrder(self, str):
-        if type(self.parseOrder(str).ordering_unit.unit) == Army:
+        if type(self.parseOrder(str).ordering_unit) == Move:
             self.move_orders.append(self.parseOrder(str))
         else: 
             self.other_orders.append(self.parseOrder(str))
 
     def addRawOrder(self, order):
-        if type(self.parseOrder(str).ordering_unit.unit) == Army:
+        if type(order) == Move:
             self.move_orders.append(self.parseOrder(str))
         else: 
             self.other_orders.append(self.parseOrder(str))

@@ -1,5 +1,5 @@
 from orders import Order, Move, Hold, Support, Convoy
-from units import Army, Fleet
+import units
 
 class Node:
     dislodged_unit = None
@@ -196,9 +196,9 @@ class CoastTile(Node):
             
     def orderLegal(self, order: Order):
         match order.ordering_unit.unit:
-            case Army():
+            case units.Army():
                 return self.orderLegalArmy(order)
-            case Fleet():
+            case units.Fleet():
                 return self.orderLegalFleet(order)
             case _:
                 return False
@@ -301,9 +301,9 @@ class MultipleCoastTile(Node):
 
     def orderLegal(self, order: Order):
         match order.ordering_unit.unit:
-            case Army():
+            case units.Army():
                 return self.orderLegalArmy(order)
-            case Fleet():
+            case units.Fleet():
                 return self.orderLegalFleet(order)
             case _:
                 return False

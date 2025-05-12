@@ -1,4 +1,4 @@
-from graph import *
+from graph import Node
 
 class Country: 
     def __init__(self, name, cores = [], provinces = [], units = []):

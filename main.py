@@ -1,8 +1,8 @@
-from orders import *
-from units import *
-from graph import * 
-from country import *
-from board import *
+from orders import Order, Move, Hold, Support, Convoy
+from units import Unit, Fleet, Army
+from graph import Node, InlandTile, CoastTile, SeaTile, MultipleCoastTile
+from country import Country
+from board import Board
 
 
 def createTestBoard():
