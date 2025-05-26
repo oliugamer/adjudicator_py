@@ -18,8 +18,24 @@ def createTestBoard():
     n10 = SeaTile("n10", [], (2, 3), False, None, None)
     n11 = SeaTile("n11", [], (3, 4), False, None, None)
 
+    n1.addArmyAdjacencies([n2, n3, n4])
+    n2.addArmyAdjacencies([n1, n7, n3])
+    n3.addArmyAdjacencies([n1, n2, n4, n5])
+    n4.addArmyAdjacencies([n1, n3])
+    n4.addFleetAdjacencies([n10, n11])
+    n5.addArmyAdjacencies([n3])
+    n5.addFleetAdjacencies([n9, n10])
+    n6.addArmyAdjacencies([n7])
+    n6.addFleetAdjacencies([n7, n8, n9])
+    n7.addArmyAdjacencies([n2, n6])
+    n7.addFleetAdjacencies([n6, n8, n9])
+    n8.addFleetAdjacencies([n5, n7, n9])
+    n9.addFleetAdjacencies([n5, n6, n7, n8, n10])
+    n10.addFleetAdjacencies([n4, n5, n9, n11])
+    n11.addFleetAdjacencies([n4, n10])
+
     c1 = Country("c1")
-    c2 = Country("c1")
+    c2 = Country("c2")
 
     c1.addProvince(n1)
     c1.addProvince(n2)
@@ -48,18 +64,32 @@ def createTestBoard():
     return board
 
 
+def getOrders(board: Board):
+    print(board.year, board.phase)
+    while True:
+        try:
+            order = input("Order: ")
+
+            if order == "exit" or order == "":
+                break
+        
+            board.addOrder(order)
+        except:
+            pass
+    
+    board.printOrders()
 
 
 board = createTestBoard()
 print(board)
 while True:
-    order = input("Order: ")
+    getOrders(board)
 
-    if order == "exit" or order == "":
-        break
-
-    order = board.parseOrder(order)
-
-    order.executeOrder()
+    board.adjudicate()
 
     print(board, end="")
+
+    exit = input("Exit? ")
+    
+    if exit == "yes":
+        break

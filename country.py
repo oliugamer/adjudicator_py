@@ -6,6 +6,7 @@ class Country:
         self.cores = cores
         self.provinces = provinces
         self.units = units
+        self.score = len(cores)
 
     def addCore(self ,node: Node):
         self.cores.append(node)

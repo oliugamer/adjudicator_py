@@ -2,20 +2,20 @@ import country
 import graph
 
 class Unit: 
-    attacking_strength = 0
-
     def __init__(self, node: graph.Node, owner: country.Country):
         self.node = node
         self.owner = owner
         owner.units.append(self)
         node.addUnit(self)
+        self.attacking_strength = 0
+        self.order = None
 
 class Army(Unit):
     def __init__(self, node, owner):
         super().__init__(node, owner)
     
     def __str__(self):
-        return "Army"
+        return "Army, " + self.owner.name
 
 
 class Fleet(Unit):
@@ -25,4 +25,4 @@ class Fleet(Unit):
             node.unit_coast = coast
 
     def __str__(self):
-        return "Fleet"
+        return "Fleet, " + self.owner.name
