@@ -18,6 +18,7 @@ class Move(Order):
     def executeOrder(self):
         unit = self.ordering_unit.movingUnit()
         print("Moving unit: ", unit)
+        unit.node = self.destination
         self.destination.addUnit(unit)
     
     def __eq__(self, value):
@@ -89,16 +90,17 @@ class Convoy(Order):
         return self.ordering_unit == value.ordering_unit and self.move == self.move
 
 class Build(Order):
-    def __init__(self, core, unit):
+    def __init__(self, core, unit, coast=-1):
         super().__init__()
         self.core = core
         self.unit = unit
+        self.coast = coast
 
     def executeOrder(self):
         if self.core.unit is not None:
             print("Invalid order")
             return
-        self.core.addUnit(self.unit)
+        self.core.buildUnit(self.unit)
 
 class Disband(Order):
     def __init__(self, disbanded_unit):
@@ -106,6 +108,8 @@ class Disband(Order):
         self.disbanded_unit = disbanded_unit
 
     def executeOrder(self):
+        unit = self.core.unit
+        unit.owner.units.remove(unit)
         self.core.removeUnit()
 
 class DisbandRetreat(Order):
@@ -114,6 +118,8 @@ class DisbandRetreat(Order):
         self.disbanded_unit = disbanded_unit
 
     def executeOrder(self):
+        unit = self.core.unit
+        unit.owner.units.remove(unit)
         self.core.disbandRetreat()
 
 

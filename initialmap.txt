@@ -1,0 +1,329 @@
+BAR, s, n
+NWG, s, n
+NAO, s, n
+MAO, s, n
+IRI, s, n
+ENG, s, n
+NTH, s, n
+HEL, s, n
+SKA, s, n
+BAL, s, n
+BOT, s, n
+WES, s, n
+LYO, s, n
+TYS, s, n
+ADR, s, n
+ION, s, n
+AEG, s, n
+EAS, s, n
+BLA, s, n
+Syr, c, n
+Arm, c, n
+Ank, c, y
+Smy, c, y
+Con, c, y
+Bul, mc, y, ec, sc
+Gre, c, y
+Alb, c, n
+Rum, c, y
+Ser, i, y
+Tri, c, y
+Bud, i, y
+Vie, i, y
+Gal, i, n
+Ukr, i, n
+Boh, i, n
+Tyr, i, n
+Sil, i, n
+Pru, c, n
+Lvn, c, n
+War, i, y
+Sev, c, y
+Mos, i, y
+Stp, mc, y, nc, sc
+Fin, c, n
+Swe, c, y
+Nwy, c, y
+Den, c, y
+Kie, c, y
+Ber, c, y
+Mun, i, y
+Ruh, i, n
+Hol, c, y
+Bel, c, y
+Pic, c, n
+Bre, c, y
+Gas, c, y
+Por, c, y
+Spa, mc, y, nc, sc
+Par, i, y
+Bur, i, n
+Mar, c, y
+Pie, c, n
+Ven, c, y
+Tus, c, n
+Rom, c, y
+Apu, c, n
+Nap, c, y
+Naf, c, n
+Tun, c, y
+Cly, c, n
+Edi, c, y
+Lvp, c, y
+Yor, c, n
+Wal, c, n
+Lon, c, y
+---
+Nwy - Swe
+Swe - Fin
+Nwy - Fin
+Nwy - Stp
+Stp - Mos
+Stp - Lvn
+Mos - Lvn
+Mos - Sev
+Mos - Ukr
+Mos - War
+Lvn - War
+Lvn - Pru
+Sev - Ukr
+Sev - Arm
+Sev - Rum
+Ukr - War
+Ukr - Gal
+Ukr - Rum
+Arm - Ank
+Arm - Smy
+Arm - Syr
+Syr - Smy
+Smy - Ank
+Smy - Con
+Ank - Con
+Con - Bul
+Bul - Rum
+Bul - Ser
+Bul - Gre
+Rum - Gal
+Rum - Bud
+Rum - Ser
+Gre - Alb
+Alb - Ser
+Alb - Tri
+Bud - Gal
+Bud - Vie
+Bud - Tri
+Gal - Sil
+Gal - Boh
+Gal - Vie
+Vie - Boh
+Vie - Tyr
+Vie - Tri
+Tri - Tyr
+Tri - Ven
+Pru - Sil
+Pru - Ber
+Sil - Boh
+Sil - Ber
+Sil - Mun
+Ber - Mun
+Ber - Kie
+Kie - Den
+Kie - Hol
+Kie - Mun
+Kie - Ruh
+Den - Swe
+Mun - Tyr
+Mun - Ruh
+Mun - Boh
+Mun - Bur
+Tyr - Ven
+Tyr - Pie
+Ven - Pie
+Ven - Tus
+Ven - Apu
+Ven - Rom
+Apu - Nap
+Apu - Rom
+Nap - Rom
+Rom - Tus
+Tus - Pie
+Pie - Mar
+Hol - Bel
+Hol - Ruh
+Bel - Ruh
+Bel - Bur
+Bel - Pic
+Ruh - Bur
+Pic - Bur
+Pic - Bre
+Pic - Par
+Bre - Par
+Bre - Gas
+Par - Gas
+Par - Bur
+Bur - Mar
+Bur - Gas
+Mar - Gas
+Mar - Spa
+Gas - Spa
+Spa - Por
+Wal - Lon
+Wal - Lvp
+Wal - Yor
+Lon - Yor
+Yor - Lvp
+Yor - Edi
+Lvp - Cly
+Lvp - Edi
+Edi - Cly
+Naf - Tun
+---
+BAR - Stp, nc
+BAR - NWG
+BAR - Nwy
+Nwy - Stp, nc
+Nwy - Swe
+Swe - Fin
+Swe - Den
+Fin - Stp, sc
+Lvn - Stp, sc
+Lvn - Pru
+BOT - Stp, sc
+BOT - Fin
+BOT - Swe
+BOT - BAL
+BOT - Lvn
+BAL - Swe
+BAL - Lvn
+BAL - Pru
+BAL - Den
+BAL - Ber
+BAL - Kie
+Pru - Ber
+Ber - Kie
+Kie - Den
+Kie - Hol
+Hol - Bel
+Bel - Pic
+Pic - Bre
+Bre - Gas
+Gas - Spa, nc
+Por - Spa, nc
+Por - Spa, sc
+Mar - Spa, sc
+Mar - Pie
+Pie - Tus
+Tus - Rom
+Rom - Nap
+Nap - Apu
+Apu - Ven
+Ven - Tri
+Tri - Alb
+Alb - Gre
+Gre - Bul, sc
+Con - Bul, sc
+Con - Bul, ec
+Con - Smy
+Con - Ank
+Smy - Syr
+Ank - Arm
+Arm - Sev
+Sev - Rum
+Rum - Bul, ec
+Naf - Tun
+Cly - Edi
+Edi - Yor
+Yor - Lon
+Lon - Wal
+Wal - Lvp
+Lvp - Cly
+SKA - Nwy
+SKA - Den
+SKA - Swe
+SKA - NTH
+NWG - Nwy
+NWG - NTH
+NWG - Edi
+NWG - Cly
+NWG - NAO
+HEL - Den
+HEL - Kie
+HEL - Hol
+HEL - NTH
+NTH - Den
+NTH - Nwy
+NTH - Edi
+NTH - Yor
+NTH - Lon
+NTH - Hol
+NTH - Bel
+NTH - ENG
+ENG - Wal
+ENG - Lon
+ENG - Bel
+ENG - Pic
+ENG - Bre
+ENG - MAO
+ENG - IRI
+IRI - Lvp
+IRI - Wal
+IRI - MAO
+IRI - NAO
+NAO - Cly
+NAO - Lvp
+NAO - MAO
+MAO - Bre
+MAO - Gas
+MAO - Spa, nc
+MAO - Spa, sc
+MAO - Por
+MAO - Naf
+MAO - WES
+WES - LYO
+WES - TYS
+WES - Spa, sc
+WES - Naf
+WES - Tun
+LYO - Spa, sc
+LYO - Mar
+LYO - Pie
+LYO - Tus
+LYO - TYS
+TYS - Tun
+TYS - Tus
+TYS - Rom
+TYS - Nap
+TYS - ION
+ADR - Apu
+ADR - Ven
+ADR - Tri
+ADR - Alb
+ADR - ION
+ION - Tun
+ION - Nap
+ION - Apu
+ION - Alb
+ION - Gre
+ION - AEG
+ION - EAS
+AEG - Gre
+AEG - Bul, sc
+AEG - Con
+AEG - Smy
+AEG - EAS
+EAS - Smy
+EAS - Syr
+BLA - Bul, ec
+BLA - Rum
+BLA - Sev
+BLA - Arm
+BLA - Ank
+BLA - Con
+---
+Austria, Tri, Bud, Vie
+Turkey, Con, Ank, Smy
+Italy, Ven, Rom, Nap
+France, Mar, Par, Bre
+Germany, Mun, Ber, Kie
+England, Edi, Lvp, Lon
+Russia, War, Sev, Mos, Stp

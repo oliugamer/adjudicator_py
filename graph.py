@@ -3,7 +3,7 @@ import units
 
 class Node:
     def __init__(self, name, alias, node_placement, core, cored_by, owned_by):
-        self.name = name
+        self.name = name.lower()
         self.alias = alias
         self.node_placement = node_placement
         self.core = core
@@ -17,6 +17,14 @@ class Node:
         self.unit = None
         self.militarized = False
         self.valid_retreats = []
+
+    def buildUnit(self, unit):
+        match unit:
+            case "a":
+                u = units.Army(self.core, self.core.cored_by)
+            case "f":
+                u = units.Fleet(self.core, self.core.cored_by, self.coast)
+        self.addUnit(u)
 
     def addUnit(self, unit):
         print("Adding unit", self.name, unit)
@@ -98,9 +106,8 @@ class Node:
 
 
 class InlandTile(Node):
-    army_adjacencies = []
-
     def __init__(self, name, alias, node_placement, core, cored_by, owned_by):
+        self.army_adjacencies = []
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
 
     def addArmyAdjacency(self, node):
@@ -145,9 +152,8 @@ class InlandTile(Node):
         return super().dislodgeUnit()
 
 class SeaTile(Node):
-    fleet_adjacencies = []
-
     def __init__(self, name, alias, node_placement, core, cored_by, owned_by):
+        self.fleet_adjacencies = []
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
 
     def addFleetAdjacency(self, node):
@@ -206,16 +212,13 @@ class SeaTile(Node):
         return super().dislodgeUnit()
 
 class Coast:
-    fleet_adjacencies = []
-
     def __init__(self):
-        pass
+        self.fleet_adjacencies = []
 
 
 class CoastTile(Node):
-    army_adjacencies = []
-
     def __init__(self, name, alias, node_placement, core, cored_by, owned_by):
+        self.army_adjacencies = []
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
         self.coast = Coast()
 
@@ -317,11 +320,10 @@ class CoastTile(Node):
         return super().dislodgeUnit()
 
 class MultipleCoastTile(Node):
-    army_adjacencies = []
-    coasts = [None, None, None, None]
-    unit_coast = -1
-
     def __init__(self, name, alias, node_placement, core, cored_by, owned_by, nc = False, sc = False, ec = False, wc = False):
+        self.army_adjacencies = []
+        self.coasts = [None, None, None, None]
+        self.unit_coast = -1 # [nc, sc, ec, wc]
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
         if nc:
             self.coasts[0] = Coast()

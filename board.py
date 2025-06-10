@@ -1,14 +1,20 @@
 from orders import Order, Move, Hold, Support, Convoy, Retreat, Build, Disband, DisbandRetreat
-from graph import Node
+from graph import Node, InlandTile, SeaTile, CoastTile, MultipleCoastTile
 from units import Unit, Army, Fleet
+from country import Country
+from pyvis.network import Network
+import colorsys
 
 class Board:
     def __init__(self, nodes, countries, phase="spring", year=1901):
         self.node_id = {}
+        self.country_id = {}
         self.nodes = nodes
         self.countries = countries
         for idx, i in enumerate(nodes):
             self.node_id[i.name] = idx
+        for idx, i in enumerate(countries):
+            self.country_id[i.name] = idx
         self.move_orders = []
         self.other_orders = []
         self.successful_moves = []
@@ -20,8 +26,124 @@ class Board:
             self.phase = "spring"
             print("Error: Unknown phase, defaulted to Spring Moves\n<> Valid options:", ["spring", "spring_retreats", "fall", "fall_retreats", "winter"], "<>")
 
+    def importBoardState(self, file):
+        with open(file, 'r') as file:
+            phase, units = file.read().split("---")
+
+            # PHASE
+            self.phase = phase.split(", ")[0].lower()
+            self.year = phase.split(", ")[1][:-1] # removing \n
+
+            # UNITS
+            for i in units.split("\n")[1:]:
+                unit = i.split(", ")
+                coast = None
+                if len(unit) == 3:
+                    c = unit[0]
+                    t = unit[1]
+                    p = self.getNode(unit[2])
+                else:
+                    c = unit[0]
+                    t = unit[1]
+                    p = self.getNode(unit[2])
+                    coast = unit[3]
+                
+                match t:
+                    case "A":
+                        Army(p, self.getCountry(c))
+                    case "F":
+                        if coast is None:
+                            Fleet(p, self.getCountry(c))
+                        else:
+                            coasts = {"nc": 0, "sc": 1, "ec": 2, "wc": 3}
+                            Fleet(p, self.getCountry(c), coasts[coast])
+
+    def createBoardFromFile(file):
+        with open(file, 'r') as file:
+            provinces, armyadj, fleetadj, countries = file.read().split("---")
+
+            # PROVINCES
+            allprovinces = {}
+            for i in provinces.split("\n")[:-1]:
+                split = i.split(", ")
+                if len(split) == 3:
+                    name, t, core = split
+                else:
+                    name = split[0]
+                    t = split[1]
+                    core = split[2]
+                    coasts = split[3:]
+                
+                province = None
+
+                core = core == "y"
+                match t:
+                    case "i":
+                        province = InlandTile(name, [], (0, 0), core, None, None)
+                    case "s":
+                        province = SeaTile(name, [], (0, 0), core, None, None)
+                    case "c":
+                        province = CoastTile(name, [], (0, 0), core, None, None)
+                    case "mc":
+                        province = MultipleCoastTile(name, [], (0, 0), core, None, None, "nc" in coasts, "sc" in coasts, "ec" in coasts, "wc" in coasts)
+                    case _:
+                        pass
+
+                allprovinces[name] = province
+
+            # ARMY ADJACENCIES
+            for i in armyadj.split("\n")[1:-1]:
+                a, b = i.split(" - ")
+                allprovinces[a].addArmyAdjacency(allprovinces[b])
+                allprovinces[b].addArmyAdjacency(allprovinces[a])
+
+            # FLEET ADJACENCIES
+            for i in fleetadj.split("\n")[1:-1]:
+                a, b = i.split(" - ")
+                coasta = None
+                coastb = None
+                if len(a.split(", ")) == 2:
+                    coasta = a.split(", ")[1]
+                    a = a.split(", ")[0]
+                if len(b.split(", ")) == 2:
+                    coastb = b.split(", ")[1]
+                    b = b.split(", ")[0]
+
+                if coasta is None:
+                    allprovinces[a].addFleetAdjacency(allprovinces[b])
+                else: 
+                    aux = a.split(", ")
+                    allprovinces[aux[0]].addFleetAdjacency(allprovinces[b], 'nc' == coasta, 'sc' == coasta, 'ec' == coasta, 'wc' == coasta)
+
+                if coastb is None:
+                    allprovinces[b].addFleetAdjacency(allprovinces[a])
+                else: 
+                    aux = b.split(", ")
+                    allprovinces[aux[0]].addFleetAdjacency(allprovinces[a], 'nc' == coastb, 'sc' == coastb, 'ec' == coastb, 'wc' == coastb)
+            
+            # COUNTRIES
+            count = []
+            for i in countries.split("\n")[1:]:
+                country = i.split(", ")
+                c = Country(country[0], [], [], [])
+                for j in country[1:]:
+                    province = allprovinces[j]
+                    if province.core:
+                        c.addProvince(province)
+                        c.addCore(province)
+                    else:
+                        c.addProvince(province)
+                count.append(c)
+
+            b = Board(list(allprovinces.values()), count)
+
+            return b
+
     def getNode(self, str) -> Node:
-        return self.nodes[self.node_id[str]]
+        return self.nodes[self.node_id[str.lower()]]
+
+    def getCountry(self, str) -> Country:
+        return self.countries[self.country_id[str.lower()]]
 
     def printOrders(self):
         for i in self.move_orders:
@@ -29,13 +151,13 @@ class Board:
         for i in self.other_orders:
             print(i)
 
-    def parseOrder(self, str, country=None) -> Order:
-        # TODO actually implement countries
+    def parseOrder(self, str) -> Order:
         str = str.split(" ")
         match str[1].lower():
             case "":
                 return
             case "m" | "-" | "r":
+                print(self.phase)
                 if self.phase in ["spring", "fall"]:
                     print("Move!")
                     ordering_unit = self.getNode(str[0])
@@ -118,8 +240,15 @@ class Board:
                         if not core.core:
                             print("Not a core")
                             return
-                        units = {"a": Army(), "f": Fleet()}
-                        order = Build(core, units[str[1]])
+                        if core.owned_by != core.cored_by:
+                            print("Can't build here")
+                            return
+                        if len(str) == 3:
+                            str.append(-1)
+                        else:
+                            coasts = {'nc': 0, 'sc': 1, 'ec': 2, 'wc': 3}
+                            str[3] = coasts[str[3]]
+                        order = Build(core, str[1], str[3])
                         return order
                     case "d" | "disband":
                         print("Disband!")
@@ -135,7 +264,7 @@ class Board:
                             order = Disband(self.getNode(str[1]))
                         return order
                 print("Parsing Error")
-        
+
     def addOrder(self, str):
         order = self.parseOrder(str)
         order.ordering_unit.unit.order = order
@@ -209,6 +338,7 @@ class Board:
         return True
 
     def adjudicateMoves(self):
+        self.successful_moves = []
         print("Adju!")
         for order in self.other_orders:
             order.support_order.ordering_unit.hold = True
@@ -271,6 +401,21 @@ class Board:
         for order in self.other_orders:
             order.executeOrder()
 
+    def claimFall(self):
+        for c in self.countries:
+            for u in c.units:
+                print(u, u.node.name)
+                p = u.node
+                if not p.core:
+                    continue
+                if self.getNode('den') == p:
+                    print('DEN!!!')
+                    for i in c.provinces:
+                        print(i)
+                if p not in c.provinces:
+                    print("owo")
+                    c.addProvince(p)
+
     def adjudicate(self):
         match self.phase:
             case "spring":
@@ -292,6 +437,7 @@ class Board:
                 self.phase = "fall_retreats"
                 for i in self.nodes:
                     i.resetAfterAdju()
+                self.claimFall()
                 # TODO claim all provinces and update score
                 return
 
@@ -300,6 +446,7 @@ class Board:
                 self.phase = "winter"
                 for i in self.nodes:
                     i.resetRetreats()
+                self.claimFall()
                 return
 
             case "winter":
@@ -308,9 +455,30 @@ class Board:
                 self.year += 1
                 return
 
+    def printGraph(self):
+        net = Network()
+        n = len(self.countries)
+        HSV_tuples = [(x*1.0/n, 0.5, 0.5) for x in range(n)]
+        RGB_tuples = list(map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples))
+        names = [i.name for i in self.nodes]
+        color = [RGB_tuples[self.country_id[i.owned_by.name]] if i.owned_by is not None
+                 else (0.5, 0.5, 0.5)
+                 for i in self.nodes]
+        color = ['#{:02x}{:02x}{:02x}'.format(int(i[0]*255), int(i[1]*255), int(i[2]*255)) for i in color]
+        shape = ['dot' if i.unit is None
+                 else 'triangle' if type(i.unit) == Fleet
+                 else 'square' if type(i.unit) == Army
+                 else 'star'
+                 for i in self.nodes]
+        print(names, color)
+        net.add_nodes(names, label=names, color=color, shape=shape)
+        net.toggle_physics(True)
+        net.show("board.html", notebook=False)
+
     def __str__(self):
         print(f"YEAR {self.year}, PHASE: {self.phase}")
-        for i in self.nodes:
-            str(i)
+        print("SCOREBOARD")
+        for i in self.countries:
+            print(f"{i.name}:\t{i.getScore()}\t{i.getAdjustments()}")
         return ""
 

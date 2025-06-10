@@ -5,7 +5,7 @@ class Unit:
     def __init__(self, node: graph.Node, owner: country.Country):
         self.node = node
         self.owner = owner
-        owner.units.append(self)
+        owner.addUnit(self)
         node.addUnit(self)
         self.attacking_strength = 0
         self.order = None

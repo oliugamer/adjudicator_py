@@ -67,20 +67,28 @@ def createTestBoard():
 def getOrders(board: Board):
     print(board.year, board.phase)
     while True:
-        try:
-            order = input("Order: ")
+        order = input("Order: ")
 
-            if order == "exit" or order == "":
-                break
-        
-            board.addOrder(order)
-        except:
-            pass
+        if order == "exit" or order == "":
+            break
+    
+        if order == "i":
+            print("Info")
+            p = input("Province: ")
+            print(board.getNode(p))
+            continue
+
+        if order == "v":
+            board.printGraph()
+            continue
+
+        board.addOrder(order)
     
     board.printOrders()
 
 
-board = createTestBoard()
+board = Board.createBoardFromFile("initialmap.txt")
+board.importBoardState("units.txt")
 print(board)
 while True:
     getOrders(board)
@@ -93,3 +101,4 @@ while True:
     
     if exit == "yes":
         break
+

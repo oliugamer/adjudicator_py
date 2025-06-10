@@ -1,0 +1,24 @@
+Spring, 1901
+---
+Russia, F, Stp, sc
+Russia, A, Mos
+Russia, A, War
+Russia, F, Sev
+Turkey, F, Ank
+Turkey, A, Con
+Turkey, A, Smy
+Austria, A, Vie
+Austria, A, Bud
+Austria, F, Tri
+Italy, A, Ven
+Italy, A, Rom
+Italy, F, Nap
+France, A, Mar
+France, A, Par
+France, F, Bre
+Germany, A, Mun
+Germany, A, Ber
+Germany, F, Kie
+England, F, Edi
+England, F, Lon
+England, A, Lvp
