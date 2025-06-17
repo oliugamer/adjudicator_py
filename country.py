@@ -28,3 +28,24 @@ class Country:
     def __str__(self):
         return self.name
     
+    def getLimitedVision(self):
+        provinces = []
+        for unit in self.units:
+            for i in unit.node.getUniqueAdjacencies():
+                if i not in provinces: 
+                    provinces.append(i)
+                for j in i.getUniqueAdjacencies():
+                    if j not in provinces: 
+                        provinces.append(j)
+        
+        return provinces
+
+    def getFoWvision(self):
+        provinces = []
+        for unit in self.units:
+            for i in unit.node.getUniqueAdjacencies():
+                if i not in provinces: 
+                    provinces.append(i)
+        
+        return provinces
+    

@@ -3,6 +3,8 @@ from units import Unit, Fleet, Army
 from graph import Node, InlandTile, CoastTile, SeaTile, MultipleCoastTile
 from country import Country
 from board import Board
+from metrics import Metrics
+from heuristics import CompleteH1, CompleteH2, LookAhead
 
 
 def createTestBoard():
@@ -80,6 +82,21 @@ def getOrders(board: Board):
 
         if order == "v":
             board.printGraph()
+            continue
+
+        if order == "h":
+            c = CompleteH1(board)
+            c2 = CompleteH2(board)
+            for i in board.countries:
+                print(i.name, c.evaluatePosition(i), c2.evaluatePosition(i))
+            continue
+
+        if order == "s":
+            c = LookAhead(board)
+            scores = []
+            for i in board.countries:
+                scores.append((i.name, c.evaluatePosition(i)))
+            print(scores)
             continue
 
         board.addOrder(order)

@@ -1,4 +1,4 @@
-from orders import Order, Move, Hold, Support, Convoy
+from orders import Order, Move, Hold, Support, Convoy, Disband, DisbandRetreat
 import units
 
 class Node:
@@ -17,26 +17,149 @@ class Node:
         self.unit = None
         self.militarized = False
         self.valid_retreats = []
+        self.board = None
+        self.convoy_check = False
 
-    def buildUnit(self, unit):
+    def getAllConvoys(self, actual, alllist, unitslist, queue, visited):
+        if actual in visited:
+            return alllist, unitslist, queue, visited
+        visited.append(actual)
+
+        aux1, aux2 = [], []
+        for i in actual.getFleetAdjacencies():
+            if type(i) == SeaTile:
+                if i.unit is not None:
+                    queue.append(i)
+            elif type(i) == CoastTile or type(i) == MultipleCoastTile:
+                alllist.append(i) 
+                if i.unit is not None and type(i.unit) == units.Army:
+                    unitslist.append(i)
+        
+        return alllist, unitslist, queue, visited
+
+    def getAllLegalMoves(self):
+        orders = [("h", self.name)]
+        match self.unit:
+            case units.Army():
+                adj = self.getArmyAdjacencies()
+                for i in adj:
+                    orders.append(("m", self.name, i.name))
+                    if i.unit is not None:
+                        orders.append(("sh", self.name, i.name))
+                
+                for i in adj:
+                    for j in i.getUniqueAdjacencies():
+                        if j.unit is not None:
+                            if j == self:
+                                continue
+                            if i in j.getCurrentAdjcencies():
+                                orders.append(("sa", self.name, j.name, i.name))
+
+                alllist = []
+                queue = [self]
+                visited = []
+                
+                while len(queue) > 0:
+                    actual = queue.pop(0)
+                    alllist, _, queue, visited = self.getAllConvoys(actual, alllist, [], queue, visited)
+
+                for i in alllist:
+                    if i == self:
+                        continue
+                    if i not in adj:
+                        orders.append(("m", self.name, i.name))
+
+            case units.Fleet():
+                adj = self.getFleetAdjacencies()
+                for i in adj:
+                    orders.append(("m", self.name, i.name))
+                    if i.unit is not None:
+                        orders.append(("sh", self.name, i.name))
+
+                for i in adj:
+                    for j in i.getUniqueAdjacencies():
+                        if j.unit is not None:
+                            orders.append(("sa", self.name, j.name, i.name))
+
+                if type(self) == SeaTile:
+                    alllist = []
+                    unitslist = []
+                    queue = [self]
+                    visited = []
+                    
+                    while len(queue) > 0:
+                        actual = queue.pop(0)
+                        alllist, unitslist, queue, visited = self.getAllConvoys(actual, alllist, unitslist, queue, visited)
+
+                    for i in unitslist:
+                        for j in alllist:
+                            if i == j:
+                                continue
+                            orders.append(("c", self.name, i.name, j.name))
+            case _:
+                pass
+        
+        return orders
+
+    def getUniqueAdjacencies(self):
+        a_adj = self.getArmyAdjacencies()
+        f_adj = self.getFleetAdjacencies()
+        adj = a_adj
+        for i in f_adj:
+            if i not in adj:
+                adj.append(i)
+        return adj
+
+    def getCurrentAdjcencies(self):
+        match self.unit:
+            case units.Army():
+                return self.getArmyAdjacencies()
+            case units.Fleet():
+                return self.getFleetAdjacencies()
+            case _:
+                return []
+
+    def getFleetAdjacencies(self):
+        pass
+
+    def getArmyAdjacencies(self):
+        pass
+
+    def buildUnit(self, unit, coast=-1):
         match unit:
             case "a":
                 u = units.Army(self.core, self.core.cored_by)
             case "f":
-                u = units.Fleet(self.core, self.core.cored_by, self.coast)
+                u = units.Fleet(self.core, self.core.cored_by, coast)
         self.addUnit(u)
 
     def addUnit(self, unit):
-        print("Adding unit", self.name, unit)
         if self.unit is not None:
             self.dislodgeUnit()
         self.unit = unit
         self.holding_strength = 1
 
+    def getValidRetreats(self):
+        adj = []
+        match self.dislodged_unit:
+            case units.Army():
+                adj = self.getArmyAdjacencies()
+            case units.Fleet():
+                adj = self.getFleetAdjacencies()
+            case _:
+                pass
+        for i in adj:
+            if i.militarized:
+                continue
+            if i.unit is not None:
+                continue
+            self.valid_retreats.append(i)
+
     def dislodgeUnit(self):
         print("Dislodging...")
         self.dislodged_unit = self.getUnit()
         self.removeUnit()
+        self.board.dislodged_units.append(self)
 
     def removeUnit(self):
         self.unit = None
@@ -60,8 +183,11 @@ class Node:
 
     def isTapped(self):
         # TODO Add dislodged convoy not tapping
+        # Add tapped if dislodged anyway
         for i in self.recieving_move_orders:
             if i.ordering_unit.orderLegal(i):
+                if type(self.unit.order.support_order) == Hold:
+                    return True
                 if type(self.unit.order.support_order) == Move and i.ordering_unit != self.unit.order.support_order.destination:
                     return True
         return False
@@ -70,7 +196,7 @@ class Node:
         return self.unit
 
     def moveUnit(self):
-        print("Preparing unit...")
+        print("Preparing unit...", self.getUnit())
         self.moving_unit = self.getUnit()
         self.removeUnit()
 
@@ -82,8 +208,12 @@ class Node:
         self.hold = False
         self.militarized = False
         self.recieving_move_orders = []
+        self.convoy_check = False
 
     def resetRetreats(self):
+        if self.dislodged_unit is not None:
+            o = DisbandRetreat(self)
+            o.executeOrder()
         self.valid_retreats = []
 
     def __eq__(self, other):
@@ -110,15 +240,21 @@ class InlandTile(Node):
         self.army_adjacencies = []
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
 
+    def getUniqueAdjacencies(self):
+        return self.getArmyAdjacencies()
+
+    def getFleetAdjacencies(self):
+        return []
+
+    def getArmyAdjacencies(self):
+        return self.army_adjacencies
+
     def addArmyAdjacency(self, node):
         self.army_adjacencies.append(node)
     
     def addArmyAdjacencies(self, nodes):
         for i in nodes:
             self.addArmyAdjacency(i)
-
-    def getArmyAdjacencies(self):
-        return self.army_adjacencies
 
     def orderLegal(self, order: Order):
         match order:
@@ -156,6 +292,12 @@ class SeaTile(Node):
         self.fleet_adjacencies = []
         super().__init__(name, alias, node_placement, core, cored_by, owned_by)
 
+    def getUniqueAdjacencies(self):
+        return self.getFleetAdjacencies()
+
+    def getArmyAdjacencies(self):
+        return []
+
     def addFleetAdjacency(self, node):
         self.fleet_adjacencies.append(node)
     
@@ -186,18 +328,7 @@ class SeaTile(Node):
                         return False
                 return False
             case Convoy():
-                # TODO
-                # if type(order.ordering_unit) != SeaTile():
-                #     return False
-                # adjacencies = self.getFleetAdjacencies()
-                # if order.move.ordering_unit in adjacencies:
-                #     order.move.ordering_unit.convoy_path.append(order)
-                #     return True
-                # if order.move.destination in adjacencies:
-                #     return True
-                # for i in adjacencies:
-                #     if i.unit.order == 
-                return False
+                return False # No need to implement
             case _:
                 print("Not an order ._.")
                 return False
@@ -245,7 +376,7 @@ class CoastTile(Node):
     def orderLegalArmy(self, order: Order):
         match order:
             case Move():
-                if order.destination in self.getArmyAdjacencies():
+                if order.destination in self.getArmyAdjacencies() or order.convoyed:
                     return True
                 return False
             case Hold():
@@ -334,6 +465,14 @@ class MultipleCoastTile(Node):
         if wc:
             self.coasts[3] = Coast()
 
+    def buildUnit(self, unit, coast=-1):
+        match unit:
+            case "a":
+                u = units.Army(self.core, self.core.cored_by)
+            case "f":
+                u = units.Fleet(self.core, self.core.cored_by, coast)
+        self.addUnit(u)
+
     def addArmyAdjacency(self, node):
         self.army_adjacencies.append(node)
 
@@ -361,7 +500,8 @@ class MultipleCoastTile(Node):
     def getArmyAdjacencies(self):
             return self.army_adjacencies
 
-    def getFleetAdjacencies(self, nc = False, sc = False, ec = False, wc = False):
+    def getFleetAdjacencies(self):
+        nc, sc, ec, wc = self.unit_coast == 0, self.unit_coast == 1, self.unit_coast == 2, self.unit_coast == 3
         try: 
             if nc:
                 return self.coasts[0].fleet_adjacencies
@@ -378,7 +518,7 @@ class MultipleCoastTile(Node):
     def orderLegalArmy(self, order: Order):
         match order:
             case Move():
-                if order.destination in self.getArmyAdjacencies():
+                if order.destination in self.getArmyAdjacencies() or order.convoyed:
                     return True
                 return False
             case Hold():
@@ -398,10 +538,9 @@ class MultipleCoastTile(Node):
                 return False
 
     def orderLegalFleet(self, order: Order):
-        nc, sc, ec, wc = self.unit_coast == 0, self.unit_coast == 1, self.unit_coast == 2, self.unit_coast == 3
         match order:
             case Move():
-                if order.destination in self.getFleetAdjacencies(nc, sc, ec, wc):
+                if order.destination in self.getFleetAdjacencies():
                     return True
                 return False
             case Hold():
@@ -409,11 +548,11 @@ class MultipleCoastTile(Node):
             case Support():
                 match order.support_order:
                     case Move():
-                        if order.support_order.destination in self.getFleetAdjacencies(nc, sc, ec, wc):
+                        if order.support_order.destination in self.getFleetAdjacencies():
                             return True
                         return False
                     case Hold():
-                        if order.support_order.ordering_unit in self.getFleetAdjacencies(nc, sc, ec, wc):
+                        if order.support_order.ordering_unit in self.getFleetAdjacencies():
                             return True
                         return False
                 return False
@@ -429,11 +568,6 @@ class MultipleCoastTile(Node):
             case _:
                 return False
 
-    def addUnit(self, unit, coast = -1):
-        self.unit_coast = coast
-        self.unit = unit
-        self.holding_strength = 1
-
     def removeUnit(self):
         self.unit_coast = -1
         self.unit = None
@@ -448,8 +582,7 @@ class MultipleCoastTile(Node):
             self.valid_retreats.append(i)
     
     def getFleetRetreats(self):
-        nc, sc, ec, wc = self.unit_coast == 0, self.unit_coast == 1, self.unit_coast == 2, self.unit_coast == 3
-        for i in self.getFleetAdjacencies(nc, sc, ec, wc):
+        for i in self.getFleetAdjacencies():
             if i.militarized:
                 continue
             if i.unit is not None:
@@ -463,3 +596,25 @@ class MultipleCoastTile(Node):
             case units.Fleet():
                 self.getFleetAdjacencies()
         return super().dislodgeUnit()
+    
+    def addUnit(self, unit, coast= -1):
+        if self.unit is not None:
+            self.dislodgeUnit()
+        self.unit = unit
+        self.holding_strength = 1
+        self.unit_coast = coast
+    
+    def __str__(self):
+        print(">"*10)
+        print("NAME -", self.name)
+        for j in self.alias:
+            print(j, end=", ")
+        print("-"*10)
+        print(f"Sc - {self.core}")
+        print(f"Owned by - {str(self.owned_by)}")
+        print(f"Cored by - {str(self.cored_by)}")
+        print(f"Unit - {str(self.unit)}", str(self.unit_coast))
+        print(f"Dislodged Unit - {str(self.dislodged_unit)}")
+        print("<"*10)
+        print()
+        return ""

@@ -20,6 +20,7 @@ class Army(Unit):
 
 class Fleet(Unit):
     def __init__(self, node, owner, coast = -1):
+        self.coast = coast
         super().__init__(node, owner)
         if type(node) == graph.MultipleCoastTile:
             node.unit_coast = coast

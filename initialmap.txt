@@ -1,78 +1,78 @@
-BAR, s, n
-NWG, s, n
-NAO, s, n
-MAO, s, n
-IRI, s, n
-ENG, s, n
-NTH, s, n
-HEL, s, n
-SKA, s, n
-BAL, s, n
-BOT, s, n
-WES, s, n
-LYO, s, n
-TYS, s, n
-ADR, s, n
-ION, s, n
-AEG, s, n
-EAS, s, n
-BLA, s, n
-Syr, c, n
-Arm, c, n
-Ank, c, y
-Smy, c, y
-Con, c, y
-Bul, mc, y, ec, sc
-Gre, c, y
-Alb, c, n
-Rum, c, y
-Ser, i, y
-Tri, c, y
-Bud, i, y
-Vie, i, y
-Gal, i, n
-Ukr, i, n
-Boh, i, n
-Tyr, i, n
-Sil, i, n
-Pru, c, n
-Lvn, c, n
-War, i, y
-Sev, c, y
-Mos, i, y
-Stp, mc, y, nc, sc
-Fin, c, n
-Swe, c, y
-Nwy, c, y
-Den, c, y
-Kie, c, y
-Ber, c, y
-Mun, i, y
-Ruh, i, n
-Hol, c, y
-Bel, c, y
-Pic, c, n
-Bre, c, y
-Gas, c, y
-Por, c, y
-Spa, mc, y, nc, sc
-Par, i, y
-Bur, i, n
-Mar, c, y
-Pie, c, n
-Ven, c, y
-Tus, c, n
-Rom, c, y
-Apu, c, n
-Nap, c, y
-Naf, c, n
-Tun, c, y
-Cly, c, n
-Edi, c, y
-Lvp, c, y
-Yor, c, n
-Wal, c, n
-Lon, c, y
+BAR, s, n, 31, 25
+NWG, s, n, 11, 23
+NAO, s, n, 3, 14
+MAO, s, n, 3, 3
+IRI, s, n, 6, 12
+ENG, s, n, 9, 11
+NTH, s, n, 13, 15
+HEL, s, n, 14, 14
+SKA, s, n, 16, 17
+BAL, s, n, 20, 16
+BOT, s, n, 21, 17
+WES, s, n, 14, 2
+LYO, s, n, 15, 5
+TYS, s, n, 18, 3
+ADR, s, n, 21, 6
+ION, s, n, 23, 1
+AEG, s, n, 27, 2
+EAS, s, n, 30, 0
+BLA, s, n, 32, 6
+Syr, c, n, 37, 0
+Arm, c, n, 37, 3
+Ank, c, y, 32, 4
+Smy, c, y, 31, 2
+Con, c, y, 29, 5
+Bul, mc, y, 27, 6, ec, sc
+Gre, c, y, 25, 2
+Alb, c, n, 24, 4
+Rum, c, y, 28, 8
+Ser, i, y, 25, 6
+Tri, c, y, 22, 7
+Bud, i, y, 25, 10
+Vie, i, y, 23, 10
+Gal, i, n, 26, 11
+Ukr, i, n, 28, 12
+Boh, i, n, 21, 11
+Tyr, i, n, 20, 9
+Sil, i, n, 22, 13
+Pru, c, n, 23, 15
+Lvn, c, n, 26, 17
+War, i, y, 25, 14
+Sev, c, y, 33, 10
+Mos, i, y, 33, 14
+Stp, mc, y, 33, 19, nc, sc
+Fin, c, n, 24, 18
+Swe, c, y, 18, 17
+Nwy, c, y, 15, 18
+Den, c, y, 16, 16
+Kie, c, y, 17, 14
+Ber, c, y, 20, 14
+Mun, i, y, 19, 11
+Ruh, i, n, 17, 12
+Hol, c, y, 15, 13
+Bel, c, y, 14, 12
+Pic, c, n, 13, 11
+Bre, c, y, 10, 10
+Gas, c, y, 11, 6
+Por, c, y, 7, 4
+Spa, mc, y, 9, 4, nc, sc
+Par, i, y, 13, 9
+Bur, i, n, 16, 10
+Mar, c, y, 14, 6
+Pie, c, n, 16, 7
+Ven, c, y, 19, 7
+Tus, c, n, 18, 6
+Rom, c, y, 19, 5
+Apu, c, n, 21, 4
+Nap, c, y, 20, 3
+Naf, c, n, 11, 0
+Tun, c, y, 17, 0
+Cly, c, n, 9, 15
+Edi, c, y, 10, 15
+Lvp, c, y, 9, 13
+Yor, c, n, 10, 14
+Wal, c, n, 9, 12
+Lon, c, y, 10, 12
 ---
 Nwy - Swe
 Swe - Fin
@@ -92,6 +92,9 @@ Sev - Rum
 Ukr - War
 Ukr - Gal
 Ukr - Rum
+War - Gal
+War - Sil
+War - Pru
 Arm - Ank
 Arm - Smy
 Arm - Syr
@@ -109,6 +112,8 @@ Rum - Ser
 Gre - Alb
 Alb - Ser
 Alb - Tri
+Ser - Bud
+Ser - Tri
 Bud - Gal
 Bud - Vie
 Bud - Tri
@@ -138,6 +143,7 @@ Mun - Boh
 Mun - Bur
 Tyr - Ven
 Tyr - Pie
+Tyr - Boh
 Ven - Pie
 Ven - Tus
 Ven - Apu

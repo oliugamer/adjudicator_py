@@ -22,3 +22,26 @@ Germany, F, Kie
 England, F, Edi
 England, F, Lon
 England, A, Lvp
+---
+Tri, Austria
+Bud, Austria
+Vie, Austria
+Con, Turkey
+Ank, Turkey
+Smy, Turkey
+Ven, Italy
+Rom, Italy
+Nap, Italy
+Mar, France
+Par, France
+Bre, France
+Mun, Germany
+Ber, Germany
+Kie, Germany
+Edi, England
+Lvp, England
+Lon, England
+War, Russia
+Sev, Russia
+Mos, Russia
+Stp, Russia
