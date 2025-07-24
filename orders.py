@@ -27,11 +27,13 @@ class Move(Order):
             self.ordering_unit.unit.attacking_strength = 1
 
     def executeOrder(self):
-        print(self)
+        # print(self)
         unit = self.ordering_unit.movingUnit()
         if unit is None:
             return
-        print("Moving unit: ", unit)
+        # print("Moving unit: ", unit)
+        if self.destination.unit is not None:
+            self.destination.dislodgeUnit()
         unit.node = self.destination
         self.destination.addUnit(unit)
         # Reset
@@ -42,6 +44,8 @@ class Move(Order):
         self.convoy_end = None
     
     def __eq__(self, value):
+        if value is None:
+            return False
         return self.ordering_unit == value.ordering_unit and self.destination == self.destination
 
     def __str__(self):
@@ -52,11 +56,10 @@ class Retreat(Order):
         super().__init__()
         self.ordering_unit = ordering_unit
         self.destination = destination
-        self.ordering_unit.unit.order = self
 
     def executeOrder(self):
         unit = self.ordering_unit.retreatUnit()
-        print("Retreating unit: ", unit)
+        # print("Retreating unit: ", unit)
         self.destination.addUnit(unit)
     
     def __eq__(self, value):
@@ -69,7 +72,7 @@ class Hold(Order):
     def __init__(self, ordering_unit, add_order=True):
         super().__init__()
         self.ordering_unit = ordering_unit
-        if add_order:
+        if add_order and ordering_unit.unit is not None:
             self.ordering_unit.unit.order = self
             self.ordering_unit.unit.attacking_strength = 0
     
@@ -128,7 +131,7 @@ class Build(Order):
 
     def executeOrder(self):
         if self.core.unit is not None:
-            print("Invalid order")
+            # print("Invalid order")
             return
         self.core.buildUnit(self.unit, self.coast)
 
@@ -136,22 +139,20 @@ class Disband(Order):
     def __init__(self, disbanded_unit):
         super().__init__()
         self.disbanded_unit = disbanded_unit
-        self.disbanded_unit.unit.order = self
 
     def executeOrder(self):
-        unit = self.disbanded_unit.unit
-        unit.owner.units.remove(unit)
-        self.core.removeUnit()
+        self.disbanded_unit.node.removeUnit()
+        self.disbanded_unit.owner.units.remove(self.disbanded_unit)
 
 class DisbandRetreat(Order):
     def __init__(self, disbanded_unit):
         super().__init__()
         self.disbanded_unit = disbanded_unit
-        self.disbanded_unit.unit.order = self
 
     def executeOrder(self):
-        unit = self.disbanded_unit.unit
-        unit.owner.units.remove(unit)
+        unit = self.disbanded_unit.dislodged_unit
+        if unit in unit.owner.units:
+            unit.owner.units.remove(unit)
         self.disbanded_unit.disbandRetreat()
 
 

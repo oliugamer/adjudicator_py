@@ -19,6 +19,7 @@ class Node:
         self.valid_retreats = []
         self.board = None
         self.convoy_check = False
+        self.sim_check = False
 
     def getAllConvoys(self, actual, alllist, unitslist, queue, visited):
         if actual in visited:
@@ -78,6 +79,8 @@ class Node:
 
                 for i in adj:
                     for j in i.getUniqueAdjacencies():
+                        if j == self:
+                            continue
                         if j.unit is not None:
                             orders.append(("sa", self.name, j.name, i.name))
 
@@ -119,6 +122,15 @@ class Node:
             case _:
                 return []
 
+    def enemyUnitClose(self):
+        if self.unit is None:
+            return False
+        adj = self.getUniqueAdjacencies()
+        for i in adj:
+            if i.unit is not None and i.unit.owner != self.unit.owner:
+                return True
+        return False
+
     def getFleetAdjacencies(self):
         pass
 
@@ -128,14 +140,12 @@ class Node:
     def buildUnit(self, unit, coast=-1):
         match unit:
             case "a":
-                u = units.Army(self.core, self.core.cored_by)
+                u = units.Army(self, self.cored_by)
             case "f":
-                u = units.Fleet(self.core, self.core.cored_by, coast)
+                u = units.Fleet(self, self.cored_by, coast)
         self.addUnit(u)
 
     def addUnit(self, unit):
-        if self.unit is not None:
-            self.dislodgeUnit()
         self.unit = unit
         self.holding_strength = 1
 
@@ -156,7 +166,7 @@ class Node:
             self.valid_retreats.append(i)
 
     def dislodgeUnit(self):
-        print("Dislodging...")
+        # print("Dislodging...")
         self.dislodged_unit = self.getUnit()
         self.removeUnit()
         self.board.dislodged_units.append(self)
@@ -184,19 +194,20 @@ class Node:
     def isTapped(self):
         # TODO Add dislodged convoy not tapping
         # Add tapped if dislodged anyway
-        for i in self.recieving_move_orders:
-            if i.ordering_unit.orderLegal(i):
-                if type(self.unit.order.support_order) == Hold:
-                    return True
-                if type(self.unit.order.support_order) == Move and i.ordering_unit != self.unit.order.support_order.destination:
-                    return True
+        if type(self.unit.order) == Support:
+            for i in self.recieving_move_orders:
+                if i.ordering_unit.orderLegal(i):
+                    if type(self.unit.order.support_order) == Hold:
+                        return True
+                    if type(self.unit.order.support_order) == Move and i.ordering_unit != self.unit.order.support_order.destination:
+                        return True
         return False
     
     def getUnit(self):
         return self.unit
 
     def moveUnit(self):
-        print("Preparing unit...", self.getUnit())
+        # print("Preparing unit...", self.getUnit())
         self.moving_unit = self.getUnit()
         self.removeUnit()
 
@@ -230,6 +241,7 @@ class Node:
         print(f"Cored by - {str(self.cored_by)}")
         print(f"Unit - {str(self.unit)}")
         print(f"Dislodged Unit - {str(self.dislodged_unit)}")
+        print(f"Moving Unit - {str(self.moving_unit)}")
         print("<"*10)
         print()
         return ""
@@ -330,7 +342,7 @@ class SeaTile(Node):
             case Convoy():
                 return False # No need to implement
             case _:
-                print("Not an order ._.")
+                # print("Not an order ._.")
                 return False
 
     def dislodgeUnit(self):
@@ -468,9 +480,9 @@ class MultipleCoastTile(Node):
     def buildUnit(self, unit, coast=-1):
         match unit:
             case "a":
-                u = units.Army(self.core, self.core.cored_by)
+                u = units.Army(self, self.cored_by)
             case "f":
-                u = units.Fleet(self.core, self.core.cored_by, coast)
+                u = units.Fleet(self, self.cored_by, coast)
         self.addUnit(u)
 
     def addArmyAdjacency(self, node):
@@ -502,6 +514,20 @@ class MultipleCoastTile(Node):
 
     def getFleetAdjacencies(self):
         nc, sc, ec, wc = self.unit_coast == 0, self.unit_coast == 1, self.unit_coast == 2, self.unit_coast == 3
+        try: 
+            if nc:
+                return self.coasts[0].fleet_adjacencies
+            elif sc:
+                return self.coasts[1].fleet_adjacencies
+            elif ec:
+                return self.coasts[2].fleet_adjacencies
+            elif wc:
+                return self.coasts[3].fleet_adjacencies
+        except:
+            return []
+        return []
+
+    def getFleetAdjacenciesbyCoast(self, nc=False, sc=False, ec=False, wc=False):
         try: 
             if nc:
                 return self.coasts[0].fleet_adjacencies
@@ -615,6 +641,7 @@ class MultipleCoastTile(Node):
         print(f"Cored by - {str(self.cored_by)}")
         print(f"Unit - {str(self.unit)}", str(self.unit_coast))
         print(f"Dislodged Unit - {str(self.dislodged_unit)}")
+        print(f"Moving Unit - {str(self.moving_unit)}")
         print("<"*10)
         print()
         return ""

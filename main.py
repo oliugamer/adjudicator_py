@@ -5,6 +5,7 @@ from country import Country
 from board import Board
 from metrics import Metrics
 from heuristics import CompleteH1, CompleteH2, LookAhead
+from simulation import Simulation
 
 
 def createTestBoard():
@@ -91,7 +92,7 @@ def getOrders(board: Board):
                 print(i.name, c.evaluatePosition(i), c2.evaluatePosition(i))
             continue
 
-        if order == "s":
+        if order == "l":
             c = LookAhead(board)
             scores = []
             for i in board.countries:
@@ -99,7 +100,14 @@ def getOrders(board: Board):
             print(scores)
             continue
 
-        board.addOrder(order)
+        if order == "s":
+            Simulation.bulkSimulateGames(board, 100, 15, 25, 25)
+            continue
+
+        try:
+            board.addOrder(order)
+        except Exception as e:
+            print(e)
     
     board.printOrders()
 

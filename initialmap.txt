@@ -228,7 +228,6 @@ Tri - Alb
 Alb - Gre
 Gre - Bul, sc
 Con - Bul, sc
-Con - Bul, ec
 Con - Smy
 Con - Ank
 Smy - Syr

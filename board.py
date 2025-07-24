@@ -26,7 +26,73 @@ class Board:
             assert(self.phase.lower() in ["spring", "spring_retreats", "fall", "fall_retreats", "winter"])
         except:
             self.phase = "spring"
-            print("Error: Unknown phase, defaulted to Spring Moves\n<> Valid options:", ["spring", "spring_retreats", "fall", "fall_retreats", "winter"], "<>")
+            # print("Error: Unknown phase, defaulted to Spring Moves\n<> Valid options:", ["spring", "spring_retreats", "fall", "fall_retreats", "winter"], "<>")
+
+    def copy(self):
+        # NODES 
+        allprovinces = {}
+        for i in self.nodes:
+            match i:
+                case InlandTile():
+                    province = InlandTile(i.name, [], i.node_placement, i.core, i.cored_by, i.owned_by)
+                case SeaTile():
+                    province = SeaTile(i.name, [], i.node_placement, i.core, i.cored_by, i.owned_by)
+                case CoastTile():
+                    province = CoastTile(i.name, [], i.node_placement, i.core, i.cored_by, i.owned_by)
+                case MultipleCoastTile():
+                    province = MultipleCoastTile(i.name, [], i.node_placement, i.core, i.cored_by, i.owned_by, i.coasts[0] is not None, i.coasts[1] is not None, i.coasts[2] is not None, i.coasts[3] is not None)
+
+            allprovinces[i.name] = province
+
+        # ADJACENCIES
+        for i in self.nodes:
+            for j in i.getArmyAdjacencies():
+                a, b = i.name, j.name
+                allprovinces[a].addArmyAdjacency(allprovinces[b])
+            
+            if type(i) == MultipleCoastTile:
+                for coast in range(4):
+                    coasts = [False, False, False, False]
+                    coasts[coast] = True
+                    for j in i.getFleetAdjacenciesbyCoast(nc=coasts[0], sc=coasts[1], ec=coasts[2], wc=coasts[3]):
+                        a, b = i.name, j.name
+                        allprovinces[a].addFleetAdjacency(allprovinces[b], nc=coasts[0], sc=coasts[1], ec=coasts[2], wc=coasts[3])
+            else: 
+                for j in i.getFleetAdjacencies():
+                    a, b = i.name, j.name
+                    allprovinces[a].addFleetAdjacency(allprovinces[b])
+
+        # COUNTRIES
+        count = {}
+        for i in self.countries:
+            c = Country(i.name, [], [], [])
+            for j in i.cores:
+                province = allprovinces[j.name]
+                c.addCore(province)
+            
+            for j in i.provinces:
+                province = allprovinces[j.name]
+                c.addProvince(province)
+
+            count[i.name] = c
+
+        # UNITS
+        for i in self.nodes:
+            if i.unit is None:
+                continue
+            
+            unit = i.unit
+            if type(unit) == Army:
+                Army(allprovinces[unit.node.name], count[unit.owner.name])
+            elif type(unit) == Fleet:
+                if type(unit.node) is MultipleCoastTile:
+                    Fleet(allprovinces[unit.node.name], count[unit.owner.name], coast=unit.node.unit_coast)
+                else: 
+                    Fleet(allprovinces[unit.node.name], count[unit.owner.name])
+        
+        b = Board(list(allprovinces.values()), list(count.values()), self.phase, self.year)
+        
+        return b
 
     def importBoardState(self, file):
         with open(file, 'r') as file:
@@ -124,14 +190,12 @@ class Board:
                 if coasta is None:
                     allprovinces[a].addFleetAdjacency(allprovinces[b])
                 else: 
-                    aux = a.split(", ")
-                    allprovinces[aux[0]].addFleetAdjacency(allprovinces[b], 'nc' == coasta, 'sc' == coasta, 'ec' == coasta, 'wc' == coasta)
+                    allprovinces[a].addFleetAdjacency(allprovinces[b], 'nc' == coasta, 'sc' == coasta, 'ec' == coasta, 'wc' == coasta)
 
                 if coastb is None:
                     allprovinces[b].addFleetAdjacency(allprovinces[a])
                 else: 
-                    aux = b.split(", ")
-                    allprovinces[aux[0]].addFleetAdjacency(allprovinces[a], 'nc' == coastb, 'sc' == coastb, 'ec' == coastb, 'wc' == coastb)
+                    allprovinces[b].addFleetAdjacency(allprovinces[a], 'nc' == coastb, 'sc' == coastb, 'ec' == coastb, 'wc' == coastb)
 
             # COUNTRIES
             count = []
@@ -146,6 +210,11 @@ class Board:
             b = Board(list(allprovinces.values()), count)
 
             return b
+
+    def placeAllUnits(self):
+        for i in self.countries:
+            for j in i.units:
+                j.node.addUnit(j)
 
     def getNode(self, str) -> Node:
         return self.nodes[self.node_id[str.lower()]]
@@ -165,9 +234,9 @@ class Board:
             case "":
                 return
             case "m" | "-" | "r":
-                print(self.phase)
+                # print(self.phase)
                 if self.phase in ["spring", "fall"]:
-                    print("Move!")
+                    # print("Move!")
                     ordering_unit = self.getNode(str[0])
                     destination = self.getNode(str[2])
                     order = Move(ordering_unit, destination)
@@ -177,20 +246,20 @@ class Board:
                     destination = self.getNode(str[2])
                     order = Retreat(ordering_unit, destination)
                     return order
-                print("Invalid order in this phase")
+                # print("Invalid order in this phase")
                 return
             case "h" | "hold" | "holds":
-                print("Hold!")
+                # print("Hold!")
                 if self.phase in ["spring_retreats", "fall_retreats", "winter"]:
-                    print("Invalid order in this phase")
+                    # print("Invalid order in this phase")
                     return
                 ordering_unit = self.getNode(str[0])
                 order = Hold(ordering_unit)
                 return order
             case "s" | "support" | "supports":
-                print("Support!")
+                # print("Support!")
                 if self.phase in ["spring_retreats", "fall_retreats", "winter"]:
-                    print("Invalid order in this phase")
+                    # print("Invalid order in this phase")
                     return
                 if str[3].lower() in ["h", "hold", "holds"]:
                     ordering_unit = self.getNode(str[0])
@@ -204,25 +273,26 @@ class Board:
                     order = Support(ordering_unit, Move(moving_unit, destination, add_order=False))
                     return order
                 else:
-                    print("Parsing Error")
+                    pass
+                    # print("Parsing Error")
             case "c" | "convoy" | "convoys":
-                print("Convoy!")
+                # print("Convoy!")
                 if self.phase in ["spring_retreats", "fall_retreats", "winter"]:
-                    print("Invalid order in this phase")
+                    # print("Invalid order in this phase")
                     return
                 ordering_unit = self.getNode(str[0])
                 if type(ordering_unit.unit) == Fleet:
                     order = Convoy(ordering_unit, Move(self.getNode(str[2]), self.getNode(str[4]), add_order=False))
                     return order
-                print("Error: An army can't order a convoy")
+                # print("Error: An army can't order a convoy")
             
             case "d" | "disband":
-                print("Disband!")
+                # print("Disband!")
                 if self.phase in ["spring", "fall"]:
-                    print("Invalid order in this phase")
+                    # print("Invalid order in this phase")
                     return
                 if self.getNode(str[0]).unit is None:
-                    print("No unit to disband :P")
+                    # print("No unit to disband :P")
                     return
                 if self.phase in ["spring_retreats", "fall_retreats"]:
                     order = DisbandRetreat(self.getNode(str[0]))
@@ -233,16 +303,16 @@ class Board:
             case _:
                 match str[0].lower():
                     case "b" | "build":
-                        print("Build!")
+                        # print("Build!")
                         if self.phase in ["spring_retreats", "fall_retreats", "spring", "fall"]:
-                            print("Invalid order in this phase")
+                            # print("Invalid order in this phase")
                             return
-                        core = self.getNode(str[1])
+                        core = self.getNode(str[2])
                         if not core.core:
-                            print("Not a core")
+                            # print("Not a core")
                             return
                         if core.owned_by != core.cored_by:
-                            print("Can't build here")
+                            # print("Can't build here")
                             return
                         if len(str) == 3:
                             str.append(-1)
@@ -252,23 +322,23 @@ class Board:
                         order = Build(core, str[1], str[3])
                         return order
                     case "d" | "disband":
-                        print("Disband!")
+                        # print("Disband!")
                         if self.phase in ["spring", "fall"]:
-                            print("Invalid order in this phase")
+                            # print("Invalid order in this phase")
                             return
                         if self.getNode(str[1]).unit is None:
-                            print("No unit to disband :P")
+                            # print("No unit to disband :P")
                             return
                         if self.phase in ["spring_retreats", "fall_retreats"]:
                             order = DisbandRetreat(self.getNode(str[1]))
                         else:
                             order = Disband(self.getNode(str[1]))
                         return order
-                print("Parsing Error")
+                # print("Parsing Error")
 
     def addOrder(self, str):
         order = self.parseOrder(str)
-        print(order)
+        # print(order)
         if order is None:
             return
         # TODO remove past order if updated
@@ -287,17 +357,18 @@ class Board:
         self.move_orders = []
         self.other_orders = []
 
-    def checkMovesAgain(self, order: Move):
-        if order.checked:
-            order.checked = False
-            res = self.checkMoves(order)
-            try: 
-                if not res:
-                    self.successful_moves.remove(order)
-            except:
-                pass
-            for o in order.ordering_unit.recieving_move_orders:
-                self.checkMovesAgain(o)
+    # def checkMovesAgain(self, order: Move):
+    #     print("problem")
+    #     if order.checked:
+    #         order.checked = False
+    #         res = self.checkMoves(order)
+    #         try: 
+    #             if not res:
+    #                 self.successful_moves.remove(order)
+    #         except:
+    #             pass
+    #         for o in order.ordering_unit.recieving_move_orders:
+    #             self.checkMovesAgain(o)
 
     def getConvoyPath(self, actual, nodes, end, path = []):
         actual.convoy_check = True
@@ -312,34 +383,34 @@ class Board:
         return []
 
     def checkMoves(self, order):
-        print(order)
+        # print(order)
         if order.checked:
-            print("Already checked")
+            # print("Already checked")
             return order.success
         order.checked = True
 
         # Check if legal
         order.legal = order.ordering_unit.orderLegal(order)
         if not order.legal:
-            print(order, order.convoyed)
-            print("Not legal")
+            # print(order, order.convoyed)
+            # print("Not legal")
             return False
 
         order.destination.militarized = True
 
         # Bounce
-        print("Recieving move orders", order.destination.name, order.destination.recieving_move_orders)
+        # print("Recieving move orders", order.destination.name, order.destination.recieving_move_orders)
         for i in order.destination.recieving_move_orders:
             if i == order:
                 continue
-            print("Check bounce with", i)
+            # print("Check bounce with", i)
             if order.ordering_unit.unit.attacking_strength <= i.ordering_unit.unit.attacking_strength:
-                print("Bounced", order.ordering_unit.unit.attacking_strength, i.ordering_unit.unit.attacking_strength)
+                # print("Bounced", order.ordering_unit.unit.attacking_strength, i.ordering_unit.unit.attacking_strength)
                 return False
 
         # Check if the unit in the province ahead is moving out
         if order.destination.unit is not None and type(order.destination.unit.order) == Move:
-            print("Checking other moves...")
+            # print("Checking other moves...")
             if order.destination.unit.order.checked:
                 if order.destination.unit.order.success or order.destination.unit.order.witing_on_result:
                     return True
@@ -348,49 +419,49 @@ class Board:
                 order.destination.unit.order.success = self.checkMoves(order.destination.unit.order)
                 order.witing_on_result = False
                 if order.destination.unit.order.success:
-                    print("Success!")
+                    # print("Success!")
                     self.successful_moves.append(order.destination.unit.order)
                     return True
 
         # Same country
         if order.destination.unit is not None and order.ordering_unit.unit.owner == order.destination.unit.owner:
-            print("Moving against a unit with the same country", order.ordering_unit.unit.owner.name, order.destination.unit.owner.name)
+            # print("Moving against a unit with the same country", order.ordering_unit.unit.owner.name, order.destination.unit.owner.name)
             return False
         
         # Remove supports into allied unit
         for o in order.supports:
             if order.destination.unit is not None and order.ordering_unit.unit is not None and o.ordering_unit.unit.owner == order.destination.unit.owner:
-                print("Removing support into an allied unit", o.ordering_unit.unit.owner, order.destination.unit.owner)
+                # print("Removing support into an allied unit", o.ordering_unit.unit.owner, order.destination.unit.owner)
                 order.ordering_unit.unit.attacking_strength -= 1
 
         # Strength check
         if order.ordering_unit.unit.attacking_strength <= order.destination.holding_strength:
-            print("Not enough strength", order.ordering_unit.unit.attacking_strength, order.destination.holding_strength)
+            # print("Not enough strength", order.ordering_unit.unit.attacking_strength, order.destination.holding_strength)
             return False
 
-        # Check if you're dislodging a support
-        if order.destination.unit is not None:
-            affected_order = order.destination.unit.order
-            if type(affected_order) == Support and not affected_order.tapped and affected_order.legal:
-                print("Dislodged support: ", affected_order.ordering_unit.name)
-                affected_order.tapped = True
-                match affected_order.support_order:
-                    case Move():
-                        affected_order.ordering_unit.unit.attacking_strength -= 1
-                        if affected_order.checked:
-                            affected_order.checked = False
-                            res = self.checkMoves(affected_order)
-                            try: 
-                                if not res:
-                                    self.successful_moves.remove(affected_order)
-                            except:
-                                pass
-                            for o in affected_order.ordering_unit.recieving_move_orders:
-                                self.checkMovesAgain(o)
-                    case Hold():
-                        affected_order.support_order.ordering_unit.holding_strength -= 1
-                        for o in affected_order.support_order.ordering_unit.recieving_move_orders:
-                            self.checkMovesAgain(o)
+        # # Check if you're dislodging a support
+        # if order.destination.unit is not None:
+        #     affected_order = order.destination.unit.order
+        #     if type(affected_order) == Support and not affected_order.tapped and affected_order.legal:
+        #         print("Dislodged support: ", affected_order.ordering_unit.name)
+        #         affected_order.tapped = True
+        #         match affected_order.support_order:
+        #             case Move():
+        #                 affected_order.ordering_unit.unit.attacking_strength -= 1
+        #                 if affected_order.checked:
+        #                     affected_order.checked = False
+        #                     res = self.checkMoves(affected_order)
+        #                     try: 
+        #                         if not res:
+        #                             self.successful_moves.remove(affected_order)
+        #                     except:
+        #                         pass
+        #                     for o in affected_order.ordering_unit.recieving_move_orders:
+        #                         self.checkMovesAgain(o)
+        #             case Hold():
+        #                 affected_order.support_order.ordering_unit.holding_strength -= 1
+        #                 for o in affected_order.support_order.ordering_unit.recieving_move_orders:
+        #                     self.checkMovesAgain(o)
         
         # # TODO change Check if you're dislodging a convoy
         # if order.destination.unit is not None:
@@ -413,23 +484,24 @@ class Board:
     def adjudicateMoves(self):
         self.convoys = []
         self.successful_moves = []
-        print("Adju!")
+        # print("Adju!")
         for order in self.other_orders:
             order.ordering_unit.hold = True
 
         # Adjudicate supports
+        # print("supports")
         for order in self.other_orders:
             order.legal = order.ordering_unit.orderLegal(order)
             match order:
                 case Hold():
                     pass
                 case Support():
-                    print("Tapped support:", order.ordering_unit.isTapped())
+                    # print("Tapped support:", order.ordering_unit.isTapped())
                     if not order.ordering_unit.isTapped():
                         match order.support_order:
                             case Move():
                                 if order.support_order.ordering_unit.unit is not None and order.legal:
-                                    print("Support", order)
+                                    # print("Support", order)
                                     # Check if the unit is doing the same move as the support
                                     if type(order.support_order.ordering_unit.unit.order) == Move:
                                         if order.support_order == order.support_order.ordering_unit.unit.order:
@@ -446,19 +518,21 @@ class Board:
                 case _:
                     pass
 
+        # print("convoy")
         for order in self.convoys:
             if not order.checked:
                 order.checked = True
                 if order.move.ordering_unit.unit.order == order.move:
                     convoyed_unit = order.move.ordering_unit.unit
-                    print(order.move.ordering_unit, convoyed_unit.order)
+                    if type(convoyed_unit.order) != Convoy:
+                        continue
                     fleetadj = order.ordering_unit.getFleetAdjacencies()
 
                     if order.move.ordering_unit in fleetadj and order.move.destination in fleetadj:
                         convoyed_unit.order.convoy_start = order.ordering_unit
                         convoyed_unit.order.convoy_end = order.ordering_unit
                         convoyed_unit.order.convoyed = True
-                        print("Convoy:", order, convoyed_unit.order.convoyed)
+                        # print("Convoy:", order, convoyed_unit.order.convoyed)
 
                     elif order.move.ordering_unit in fleetadj:
                         convoyed_unit.order.convoy_start = order.ordering_unit
@@ -470,7 +544,7 @@ class Board:
                     
                     else:
                         for i in order.ordering_unit.getFleetAdjacencies():
-                            if type(i.unit.order) == Convoy and i.unit.order.move == order.move:
+                            if i.unit is not None and type(i.unit.order) == Convoy and i.unit.order.move == order.move:
                                 convoyed_unit.order.convoy_path.append(order.ordering_unit)
                     
                     if convoyed_unit.order.convoy_start is not None and convoyed_unit.order.convoy_end is not None and not convoyed_unit.order.convoyed:
@@ -478,25 +552,24 @@ class Board:
                         if len(convoy) != 0:
                             convoyed_unit.order.convoyed = True
 
-
+        # print("moves")
         for order in self.move_orders:
             order.ordering_unit.hold = False
             order.success = self.checkMoves(order)
             if order.success:
-                print("Success!")
                 self.successful_moves.append(order)
 
+        # print("loops")
         for i in self.successful_moves:
-            print(i)
             i.ordering_unit.moveUnit()
 
         for i in self.successful_moves:
             i.executeOrder()
 
         for i in self.dislodged_units:
-            print(i)
             i.getValidRetreats()
 
+        # print("reset")
         self.resetOrders()
 
     def adjudicateRetreats(self):
@@ -508,26 +581,24 @@ class Board:
                 case Disband():
                     order.executeOrder()
         
+        self.dislodged_units = []
         self.resetOrders()
 
     def adjudicateWinter(self):
         for order in self.other_orders:
             order.executeOrder()
+        self.resetOrders()
 
     def claimFall(self):
         for c in self.countries:
             for u in c.units:
-                print(u, u.node.name)
+                # print(u, u.node.name)
                 p = u.node
                 if not p.core:
                     continue
-                if self.getNode('den') == p:
-                    print('DEN!!!')
-                    for i in c.provinces:
-                        print(i)
                 if p not in c.provinces:
-                    print("owo")
                     c.addProvince(p)
+
 
     def adjudicate(self):
         match self.phase:

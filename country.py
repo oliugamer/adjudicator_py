@@ -13,6 +13,9 @@ class Country:
         node.cored_by = self
 
     def addProvince(self, node: Node):
+        if node.owned_by is not None and node in node.owned_by.provinces:
+            if node.owned_by != self:
+                node.owned_by.provinces.remove(node)
         self.provinces.append(node)
         node.owned_by = self
 
@@ -28,6 +31,11 @@ class Country:
     def __str__(self):
         return self.name
     
+    def __eq__(self, other):
+        if other is None:
+            return False
+        return self.name == other.name
+
     def getLimitedVision(self):
         provinces = []
         for unit in self.units:
